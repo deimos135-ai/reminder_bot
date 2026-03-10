@@ -1,26 +1,19 @@
 import os
 from aiohttp import web
-from aiogram import Bot, Dispatcher, Router, F
-from aiogram.types import Update, Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram import Bot, Dispatcher, Router
+from aiogram.types import Update, Message, BotCommand
+from aiogram.filters import Command
 from aiogram.client.default import DefaultBotProperties
 
-from scheduler import (
-    setup_scheduler,
-    get_weekly_focus_message,
-    get_daily_result_message,
-)
+from scheduler import get_weekly_focus_message, get_daily_result_message
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-CHAT_ID = int(os.getenv("CHAT_ID", "0"))
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH", "/webhook")
 PORT = int(os.getenv("PORT", "8080"))
 
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN is not set")
-
-if not CHAT_ID:
-    raise ValueError("CHAT_ID is not set")
 
 if not WEBHOOK_HOST:
     raise ValueError("WEBHOOK_HOST is not set")
@@ -35,67 +28,38 @@ bot = Bot(
 dp = Dispatcher()
 router = Router()
 
-
-def get_main_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="📊 Day"),
-                KeyboardButton(text="📌 Weekly"),
-            ],
-            [
-                KeyboardButton(text="👋 Hello"),
-            ]
-        ],
-        resize_keyboard=True,
-        input_field_placeholder="Оберіть дію"
-    )
-
-
 HELLO_TEXT = (
     "👋 Привіт, колеги!\n\n"
     "Я бот-нагадувач цієї групи.\n"
-    "Допомагаю не забути про регулярні апдейти:\n\n"
-    "📌 щопонеділка о 09:00 — нагадую скинути фокус на тиждень\n"
-    "📊 щодня з понеділка по п’ятницю о 16:55 — нагадую скинути результат за день\n\n"
-    "Також можна вручну натиснути кнопки нижче:\n"
-    "• Day — показати нагадування за день\n"
-    "• Weekly — показати нагадування на тиждень\n"
-    "• Hello — показати це повідомлення\n\n"
-    "Працюю тихо, стабільно і без зайвих слів 🙂"
+    "Моя задача — допомагати з регулярними апдейтами:\n\n"
+    "📌 Щопонеділка о 09:00 нагадую скинути фокус на тиждень.\n"
+    "📊 Щодня з понеділка по п’ятницю о 16:55 нагадую скинути результат за день.\n\n"
+    "Доступні команди:\n"
+    "/hello — коротко про мене\n"
+    "/weekly — показати нагадування про фокус на тиждень\n"
+    "/day — показати нагадування про результат за день\n\n"
+    "Працюю тихо, стабільно і без зайвого шуму 🙂"
 )
 
 
-@router.message(F.text == "/start")
+@router.message(Command("start"))
 async def start_handler(message: Message):
-    await message.answer(
-        HELLO_TEXT,
-        reply_markup=get_main_keyboard()
-    )
+    await message.answer(HELLO_TEXT)
 
 
-@router.message(F.text == "👋 Hello")
+@router.message(Command("hello"))
 async def hello_handler(message: Message):
-    await message.answer(
-        HELLO_TEXT,
-        reply_markup=get_main_keyboard()
-    )
+    await message.answer(HELLO_TEXT)
 
 
-@router.message(F.text == "📌 Weekly")
+@router.message(Command("weekly"))
 async def weekly_handler(message: Message):
-    await message.answer(
-        get_weekly_focus_message(),
-        reply_markup=get_main_keyboard()
-    )
+    await message.answer(get_weekly_focus_message())
 
 
-@router.message(F.text == "📊 Day")
+@router.message(Command("day"))
 async def day_handler(message: Message):
-    await message.answer(
-        get_daily_result_message(),
-        reply_markup=get_main_keyboard()
-    )
+    await message.answer(get_daily_result_message())
 
 
 dp.include_router(router)
@@ -118,7 +82,13 @@ async def telegram_webhook(request):
 
 async def on_startup(app):
     await bot.set_webhook(WEBHOOK_URL)
-    setup_scheduler(bot, CHAT_ID)
+
+    await bot.set_my_commands([
+        BotCommand(command="hello", description="Про бота"),
+        BotCommand(command="weekly", description="Нагадування про фокус на тиждень"),
+        BotCommand(command="day", description="Нагадування про результат за день"),
+    ])
+
     print(f"Webhook set to: {WEBHOOK_URL}")
 
 
