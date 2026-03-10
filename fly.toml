@@ -1,4 +1,4 @@
-app = "reminder_bot"
+app = "reminder-bot-iuoitw"
 primary_region = "fra"
 
 [build]
@@ -7,10 +7,14 @@ primary_region = "fra"
   PORT = "8080"
   WEBHOOK_PATH = "/webhook"
 
+[processes]
+  web = "python main.py"
+  worker = "python worker.py"
+
 [http_service]
   internal_port = 8080
   force_https = true
   auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
+  processes = ["web"]
