@@ -14,11 +14,11 @@ weekly_focus_messages = [
 ]
 
 daily_result_messages = [
-    "📊 Колеги, час підбити підсумок дня. Скиньте, будь ласка, свій результат за сьогодні.\n\n- Що зроблено\n- Чи є проблеми",
-    "📝 Нагадування: поділіться коротко результатом за день.\n\n- Що зроблено\n- Чи є труднощі",
-    "✅ Будь ласка, скиньте ваш підсумок за день.\n\n- Виконано ",
-    "📌 Прошу написати результат за день: що вдалося зробити, що завершено",
-    "📣 Колеги, скиньте, будь ласка, короткий звіт за день."
+    "📊 Колеги, час підбити підсумок тижня. Скиньте, будь ласка, свій результат.\n\n- Що зроблено\n- Чи є проблеми",
+    "📝 Нагадування: поділіться коротко результатом за тиждень.\n\n- Що зроблено\n- Чи є труднощі",
+    "✅ Будь ласка, скиньте ваш підсумок за тиждень.\n\n- Виконано ",
+    "📌 Прошу написати результат за тиждень: що вдалося зробити, що завершено",
+    "📣 Колеги, скиньте, будь ласка, короткий звіт за тиждень."
 ]
 
 
@@ -65,7 +65,7 @@ def setup_scheduler(bot, chat_id: int):
 
     scheduler.add_job(
         send_weekly_focus,
-        trigger=CronTrigger(day_of_week="mon", hour=9, minute=0, timezone=kyiv_tz),
+        trigger=CronTrigger(day_of_week="mon", hour=10, minute=0, timezone=kyiv_tz),
         args=[bot, chat_id],
         id="weekly_focus_reminder",
         replace_existing=True,
@@ -73,12 +73,12 @@ def setup_scheduler(bot, chat_id: int):
 
     scheduler.add_job(
         send_daily_result,
-        trigger=CronTrigger(day_of_week="mon-fri", hour=16, minute=55, timezone=kyiv_tz),
+        trigger=CronTrigger(day_of_week="fri", hour=16, minute=0, timezone=kyiv_tz),
         args=[bot, chat_id],
-        id="daily_result_reminder",
+        id="weekly_result_reminder",
         replace_existing=True,
     )
 
     scheduler.start()
-    print("Scheduler started")
+    print("Scheduler started: Monday 10:00 and Friday 16:00 Europe/Kyiv")
     return scheduler
